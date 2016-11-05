@@ -12,9 +12,9 @@ void EtsTargetFunction::init(std::vector<double> & p_y, int p_nstate, int p_erro
 		int p_trendtype, int p_seasontype, bool p_damped,
 		std::vector<double> & p_lower, std::vector<double> & p_upper, std::string p_opt_crit,
 		int p_nmse, std::string p_bounds, int p_m,
-		bool p_optAlpha, bool p_optBeta, bool p_optGamma, bool p_optPhi,
-		bool p_givenAlpha, bool p_givenBeta, bool p_givenGamma, bool p_givenPhi,
-		double alpha, double beta, double gamma, double phi) {
+		bool p_optAlpha, bool p_optBeta, bool p_optGamma, bool p_optPhi, bool p_optLambda, bool p_optRho,
+		bool p_givenAlpha, bool p_givenBeta, bool p_givenGamma, bool p_givenPhi, bool p_givenLambda, bool p_givenRho,
+		double alpha, double beta, double gamma, double phi, double lambda, double rho) {
 
 	this->y = p_y;
 	this->n = this->y.size();
@@ -38,11 +38,15 @@ void EtsTargetFunction::init(std::vector<double> & p_y, int p_nstate, int p_erro
 	this->optBeta = p_optBeta;
 	this->optGamma = p_optGamma;
 	this->optPhi = p_optPhi;
+	this->optLambda = p_optLambda;
+	this->optRho = p_optRho;
 
 	this->givenAlpha = p_givenAlpha;
 	this->givenBeta = p_givenBeta;
 	this->givenGamma = p_givenGamma;
 	this->givenPhi = p_givenPhi;
+	this->givenLambda = p_givenLambda;
+	this->givenRho = p_givenRho;
 
 /*		Rprintf("optAlpha: %d\n", optAlpha);
 		Rprintf("optBeta: %d\n", optBeta);
@@ -59,6 +63,8 @@ void EtsTargetFunction::init(std::vector<double> & p_y, int p_nstate, int p_erro
 	this->beta = beta;
 	this->gamma = gamma;
 	this->phi = phi;
+	this->lambda = lambda;
+	this->rho = rho;
 
 	this->lik = 0;
 	this->objval = 0;
@@ -108,6 +114,8 @@ void EtsTargetFunction::eval(const double* p_par, int p_par_length) {
 	if(optBeta) this->beta = par[j++];
 	if(optGamma) this->gamma = par[j++];
 	if(optPhi) this->phi = par[j++];
+	if(optLambda) this->lambda = par[j++];
+	if(optRho) this->rho = par[j++];
 
 	if(!this->check_params()) {
 		this->objval = R_PosInf;
@@ -163,7 +171,7 @@ void EtsTargetFunction::eval(const double* p_par, int p_par_length) {
 	for(int i=0; i <= p*this->y.size(); i++) state.push_back(0);
 
 	etscalc(&this->y[0], &this->n, &this->state[0], &this->m, &this->errortype, &this->trendtype, &this->seasontype,
-			&this->alpha, &this->beta, &this->gamma, &this->phi, &this->e[0], &this->lik, &this->amse[0], &this->nmse);
+			&this->alpha, &this->beta, &this->gamma, &this->phi, &this->lambda, &this->rho, &this->e[0], &this->lik, &this->amse[0], &this->nmse);
 
 
 	// Avoid perfect fits
@@ -230,6 +238,16 @@ bool EtsTargetFunction::check_params() {
 		if(optPhi)
 		{
 			if(phi < lower[3] || phi > upper[3])
+				return(false);
+		}
+		if(optLambda)
+		{
+			if(lambda < lower[4] || lambda > upper[4])
+				return(false);
+		}
+		if(optRho)
+		{
+			if(rho < lower[5] || rho > upper[5])
 				return(false);
 		}
 		if(optGamma)

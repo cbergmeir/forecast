@@ -19,9 +19,9 @@
 RcppExport SEXP etsTargetFunctionInit(SEXP p_y, SEXP p_nstate, SEXP p_errortype, SEXP p_trendtype,
 		SEXP p_seasontype, SEXP p_damped, SEXP p_lower, SEXP p_upper,
 		SEXP p_opt_crit, SEXP p_nmse, SEXP p_bounds, SEXP p_m,
-		SEXP p_optAlpha, SEXP p_optBeta, SEXP p_optGamma, SEXP p_optPhi,
-		SEXP p_givenAlpha, SEXP p_givenBeta, SEXP p_givenGamma, SEXP p_givenPhi,
-		SEXP p_alpha, SEXP p_beta, SEXP p_gamma, SEXP p_phi, SEXP p_rho) {
+		SEXP p_optAlpha, SEXP p_optBeta, SEXP p_optGamma, SEXP p_optPhi, SEXP p_optLambda, SEXP p_optRho,
+		SEXP p_givenAlpha, SEXP p_givenBeta, SEXP p_givenGamma, SEXP p_givenPhi, SEXP p_givenLambda, SEXP p_givenRho,
+		SEXP p_alpha, SEXP p_beta, SEXP p_gamma, SEXP p_phi, SEXP p_lambda, SEXP p_rho, SEXP p_envir) {
 
 	BEGIN_RCPP;
 
@@ -50,24 +50,29 @@ RcppExport SEXP etsTargetFunctionInit(SEXP p_y, SEXP p_nstate, SEXP p_errortype,
 	bool optBeta = Rcpp::as<bool>(p_optBeta);
 	bool optGamma = Rcpp::as<bool>(p_optGamma);
 	bool optPhi = Rcpp::as<bool>(p_optPhi);
+	bool optLambda = Rcpp::as<bool>(p_optLambda);
+	bool optRho = Rcpp::as<bool>(p_optRho);
 
 	bool givenAlpha = Rcpp::as<bool>(p_givenAlpha);
 	bool givenBeta = Rcpp::as<bool>(p_givenBeta);
 	bool givenGamma = Rcpp::as<bool>(p_givenGamma);
 	bool givenPhi = Rcpp::as<bool>(p_givenPhi);
+	bool givenLambda = Rcpp::as<bool>(p_givenLambda);
+	bool givenRho = Rcpp::as<bool>(p_givenRho);
 
 	double alpha = Rcpp::as<double>(p_alpha);
 	double beta = Rcpp::as<double>(p_beta);
 	double gamma = Rcpp::as<double>(p_gamma);
 	double phi = Rcpp::as<double>(p_phi);
-
+	double lambda = Rcpp::as<double>(p_lambda);
+	double rho = Rcpp::as<double>(p_rho);
 
 	sp->init(y, nstate, errortype, trendtype, seasontype, damped, lower, upper, opt_crit,
-			nmse, bounds, m, optAlpha, optBeta, optGamma, optPhi,
-			givenAlpha, givenBeta, givenGamma, givenPhi,
-			alpha, beta, gamma, phi);
+			nmse, bounds, m, optAlpha, optBeta, optGamma, optPhi, optLambda, optRho,
+			givenAlpha, givenBeta, givenGamma, givenPhi, givenLambda, givenRho,
+			alpha, beta, gamma, phi, lambda, rho);
 
-	Rcpp::Environment e(p_rho);
+	Rcpp::Environment e(p_envir);
 	e["ets.xptr"] = Rcpp::XPtr<EtsTargetFunction>( sp, true );
 
 	return Rcpp::wrap(e);
@@ -75,25 +80,25 @@ RcppExport SEXP etsTargetFunctionInit(SEXP p_y, SEXP p_nstate, SEXP p_errortype,
 	END_RCPP;
 }
 
-// RcppExport double targetFunctionRmalschains(SEXP p_par, SEXP p_env)
-// {
-// 	Rcpp::NumericVector par(p_par);
+ RcppExport double targetFunctionRmalschains(SEXP p_par, SEXP p_env)
+ {
+ 	Rcpp::NumericVector par(p_par);
 
-// 	Rcpp::Environment e(p_env);
-// 	Rcpp::XPtr<EtsTargetFunction> sp(e.get("ets.xptr"));
+ 	Rcpp::Environment e(p_env);
+ 	Rcpp::XPtr<EtsTargetFunction> sp(e.get("ets.xptr"));
 
-// 	sp->eval(par.begin(), par.size());
+ 	sp->eval(par.begin(), par.size());
 
-// 	//return Rcpp::wrap(sp->getObjVal());
-// 	return sp->getObjVal();
+ 	//return Rcpp::wrap(sp->getObjVal());
+ 	return sp->getObjVal();
 
-// }
+ }
 
-// RcppExport SEXP etsGetTargetFunctionRmalschainsPtr() {
+ RcppExport SEXP etsGetTargetFunctionRmalschainsPtr() {
 
-// 	typedef double (*funcPtr)(SEXP, SEXP);
-// 	return (Rcpp::XPtr<funcPtr>(new funcPtr(&targetFunctionRmalschains)));
-// }
+ 	typedef double (*funcPtr)(SEXP, SEXP);
+ 	return (Rcpp::XPtr<funcPtr>(new funcPtr(&targetFunctionRmalschains)));
+ }
 
 /*
 RcppExport SEXP targetFunctionRdonlp2(SEXP p_var, SEXP p_env)
