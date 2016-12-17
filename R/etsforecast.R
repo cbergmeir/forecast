@@ -10,7 +10,7 @@ forecast.ets <- function(object, h=ifelse(object$m>1, 2*object$m, 10),
     biasadj <- FALSE
   if(!PI & !biasadj)
   {
-    simulate <- bootstrap <- fan <- FALSE
+    #simulate <- bootstrap <- fan <- FALSE
     if(!biasadj)
       npaths <- 2 # Just to avoid errors
     level <- 90
@@ -98,31 +98,50 @@ forecast.ets <- function(object, h=ifelse(object$m>1, 2*object$m, 10),
 
 pegelsfcast.C <- function(h,obj,npaths,level,bootstrap)
 {
-  y.paths <- matrix(NA,nrow=npaths,ncol=h)
-  obj$lambda <- NULL # No need to transform these here as we do it later.
-  for(i in 1:npaths)
-    y.paths[i,] <- simulate.ets(obj, h, future=TRUE, bootstrap=bootstrap)
+#  y.paths <- matrix(NA,nrow=npaths,ncol=h)
+#  obj$lambda <- NULL # No need to transform these here as we do it later.
+#  for(i in 1:npaths)
+#    y.paths[i,] <- simulate.ets(obj, h, future=TRUE, bootstrap=bootstrap)
+
+  print("pegelsfcast.C")
+  
+  
+  
   y.f <- .C("etsforecast",
       as.double(obj$state[length(obj$x)+1,]),
       as.integer(obj$m),
       as.integer(switch(obj$components[2],"N"=0,"A"=1,"M"=2)),
       as.integer(switch(obj$components[3],"N"=0,"A"=1,"M"=2)),
+      as.double(obj$par["alpha"]),
+      as.double(obj$par["beta"]),
       as.double(ifelse(obj$components[4]=="FALSE",1,obj$par["phi"])),
+      as.double(obj$par["lambda"]),
+      as.double(obj$par["rho"]),
       as.integer(h),
       as.double(numeric(h)),
-    PACKAGE="forecast")[[7]]
+    PACKAGE="forecast")[[11]]
+
+#browser()
+
+print(y.f)
+
+
   if(abs(y.f[1]+99999) < 1e-7)
     stop("Problem with multiplicative damped trend")
 
-  lower <- apply(y.paths,2,quantile,0.5 - level/200, type=8, na.rm=TRUE)
-  upper <- apply(y.paths,2,quantile,0.5 + level/200, type=8, na.rm=TRUE)
-  if(length(level)>1)
-  {
-    lower <- t(lower)
-    upper <- t(upper)
-  }
-  return(list(mu=y.f,lower=lower,upper=upper))
+#  lower <- apply(y.paths,2,quantile,0.5 - level/200, type=8, na.rm=TRUE)
+#  upper <- apply(y.paths,2,quantile,0.5 + level/200, type=8, na.rm=TRUE)
+#  if(length(level)>1)
+#  {
+#    lower <- t(lower)
+#    upper <- t(upper)
+#  }
+  return(list(mu=y.f,lower=y.f,upper=y.f))
 }
+
+#environment(pegelsfcast.C2) <- environment(forecast:::class1)
+#environment(forecast.ets2) <- environment(forecast:::class1)
+#forecast:::pegelsfcast.C <- pegelsfcast.C
 
 class1 <- function(h,last.state,trendtype,seasontype,damped,m,sigma2,par)
 {

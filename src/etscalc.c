@@ -13,10 +13,10 @@ void etscalc(double *, int *, double *, int *, int *, int *, int *,
     double *, double *, double *, double *, double *, double *, double *, double *, double *, int*);
 void etssimulate(double *, int *, int *, int *, int *,
     double *, double *, double *, double *, double *, double *, int *, double *, double *);
-void etsforecast(double *, int *, int *, int *, double *, double *, double *, int *, double *);
+void etsforecast(double *, int *, int *, int *, double *, double *, double *, double *, double *, int *, double *);
 
 // Internal functions
-void forecast(double, double, double *, int, int, int, double, double, double, double *, int);
+void forecast(double, double, double *, int, int, int, double, double, double, double, double, double *, int);
 void update(double *, double *, double *, double *, double *, double *, int, int, int,
     double, double, double, double, double);
 
@@ -66,7 +66,7 @@ void etscalc(double *y, int *n, double *x, int *m, int *error, int *trend, int *
         }
 
         // ONE STEP FORECAST
-        forecast(oldl, oldb, olds, *m, *trend, *season, *phi, *lambda, *rho, f, *nmse);
+        forecast(oldl, oldb, olds, *m, *trend, *season, *alpha, *beta, *phi, *lambda, *rho, f, *nmse);
         if(fabs(f[0]-NA) < TOL)
         {
             *lik = NA;
@@ -145,7 +145,7 @@ void etssimulate(double *x, int *m, int *error, int *trend, int *season,
         }
 
         // ONE STEP FORECAST
-        forecast(oldl, oldb, olds, *m, *trend, *season, *phi, *lambda, *rho, f, 1);
+        forecast(oldl, oldb, olds, *m, *trend, *season, *alpha, *beta, *phi, *lambda, *rho, f, 1);
         if(fabs(f[0]-NA) < TOL)
         {
             y[0]=NA;
@@ -164,7 +164,7 @@ void etssimulate(double *x, int *m, int *error, int *trend, int *season,
 
 // *********************************************************************************
 
-void etsforecast(double *x, int *m, int *trend, int *season, double *phi, double *lambda, double *rho, int *h, double *f)
+void etsforecast(double *x, int *m, int *trend, int *season, double *alpha, double *beta, double *phi, double *lambda, double *rho, int *h, double *f)
 
 {
     int j;
@@ -189,15 +189,15 @@ void etsforecast(double *x, int *m, int *trend, int *season, double *phi, double
     }
 
     // Compute forecasts
-    forecast(l, b, s, *m, *trend, *season, *phi, *lambda, *rho, f, *h);
+    forecast(l, b, s, *m, *trend, *season, *alpha, *beta, *phi, *lambda, *rho, f, *h);
 }
 
 // *****************************************************************
 
-void forecast(double l, double b, double *s, int m, int trend, int season, double phi, double lambda, double rho, double *f, int h)
+void forecast(double l, double b, double *s, int m, int trend, int season, double alpha, double beta, double phi, double lambda, double rho, double *f, int h)
 {
     int i,j;
-    double phistar;
+    double phistar,lnew;
 
     //phistar = phi;
 
@@ -211,12 +211,18 @@ void forecast(double l, double b, double *s, int m, int trend, int season, doubl
             f[i] = l;
         else if(trend == ADD)
 //          f[i] = l + phi*b + lambda * pow(fabs(l), rho); //I added + lambda * pow(l, rho)
-          f[i] = l + phistar*phi*b + lambda * pow(fabs(l), rho); //I added + lambda * pow(l, rho)
+          f[i] = l + phi*b + lambda * pow(fabs(l), rho); //I added + lambda * pow(l, rho)
        //     f[i] = l + phistar*b + lambda * pow(l, rho);
         else if(b<0)
             f[i] = NA;
         else
             f[i] = l * pow(b,phistar);
+
+        lnew = alpha*f[i] + (1 - alpha) * l;
+        b = beta * (lnew - l) + (1 - beta)* b;
+        l = lnew;
+
+        /*
         j = m-1-i;
         while(j < 0)
              j += m;
@@ -231,6 +237,8 @@ void forecast(double l, double b, double *s, int m, int trend, int season, doubl
             else
                 phistar = phistar + pow(phi, (double) (i+1));
         }
+        */
+
     }
 }
 
